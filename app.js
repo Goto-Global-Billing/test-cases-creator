@@ -5,19 +5,12 @@ const app = express();
 require('dotenv').config();
 
 const API_PORT = 3001;
-// config for your database
-// var config = {
-//     user: process.env.DB_USER,
-//     password: process.env.DB_PASSWORD,    
-//     server: process.env.DB_SERVER, 
-//     database: process.env.DB_DATABASE 
-// };
-
+//config for your database
 var config = {
-    user: 'Car2GoReadUsr',
-    password: 'gEYdN/QSOuogSQ9m',    
-    server: 'test-billingdb.database.windows.net', 
-    database: 'Test-Car2GoDB' 
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,    
+    server: process.env.DB_SERVER, 
+    database: process.env.DB_DATABASE 
 };
 
 app.use(cors());
