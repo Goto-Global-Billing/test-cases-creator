@@ -4,7 +4,7 @@ var cors = require('cors');
 const app = express();
 require('dotenv').config();
 
-const API_PORT = 3001;
+const API_PORT = process.env.PORT || 3001;
 //config for your database
 var config = {
     user: process.env.DB_USER,
