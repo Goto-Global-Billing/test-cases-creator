@@ -17,7 +17,7 @@ app.use(cors());
 
 app.get('/billing-lines/:reservationId', function (req, res) {    
     const { reservationId } = req.params;   
-
+    console.log('*******reservationId', reservationId)
     if(!reservationId) {
         console.error('reservationId is empty');
         return;
@@ -26,7 +26,8 @@ app.get('/billing-lines/:reservationId', function (req, res) {
     sql.on('error', err => { console.log('DB Connection error: ', err); })
 
     sql.connect(config)
-    .then(pool => {       
+    .then(pool => { 
+        console.log('*****pool')      
         return pool.request()
             .input('reservationId', sql.NVarChar(50), reservationId)
             .query(`
@@ -52,9 +53,11 @@ app.get('/billing-lines/:reservationId', function (req, res) {
                     where bl.OrigCDRExtID = @reservationId and bl.IsActive = 1            
             `)
     }).then(result => {
+        console.log('*****result', result)
         // send records as a response
         res.send(result.recordset);
     }).catch(err => {
+        console.log('*****err', err)
         res.send(err);
     });
 });
