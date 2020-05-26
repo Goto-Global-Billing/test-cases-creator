@@ -15,9 +15,13 @@ var config = {
 
 app.use(cors());
 
+app.get('/', function (req, res) {
+    res.send('This is a Magic Billing Application!');
+  });
+
 app.get('/billing-lines/:reservationId', function (req, res) {    
     const { reservationId } = req.params;   
-    console.log('*******reservationId', reservationId)
+    
     if(!reservationId) {
         console.error('reservationId is empty');
         return;
@@ -26,8 +30,7 @@ app.get('/billing-lines/:reservationId', function (req, res) {
     sql.on('error', err => { console.log('DB Connection error: ', err); })
 
     sql.connect(config)
-    .then(pool => { 
-        console.log('*****pool')      
+    .then(pool => {              
         return pool.request()
             .input('reservationId', sql.NVarChar(50), reservationId)
             .query(`
@@ -52,12 +55,10 @@ app.get('/billing-lines/:reservationId', function (req, res) {
                     inner join b_BillingLineText bt on bl.b_BillingLineTextID = bt.ID
                     where bl.OrigCDRExtID = @reservationId and bl.IsActive = 1            
             `)
-    }).then(result => {
-        console.log('*****result', result)
+    }).then(result => {        
         // send records as a response
         res.send(result.recordset);
-    }).catch(err => {
-        console.log('*****err', err)
+    }).catch(err => {        
         res.send(err);
     });
 });
