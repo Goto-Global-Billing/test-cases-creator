@@ -4,13 +4,12 @@ var cors = require('cors');
 const app = express();
 require('dotenv').config();
 
-const API_PORT = process.env.PORT || 3001;
+const API_PORT = 3001;
 //config for your database
 var config = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,    
-    server: process.env.DB_SERVER, 
-    database: process.env.DB_DATABASE 
+    server: process.env.DB_SERVER    
 };
 
 app.use(cors());
@@ -19,15 +18,22 @@ app.get('/', function (req, res) {
     res.send('This is a Magic Billing Application!');
   });
 
-app.get('/billing-lines/:reservationId', function (req, res) {    
-    const { reservationId } = req.params;   
+app.get('/billing-lines/:reservationId/:db', function (req, res) {    
+    const { reservationId, db } = req.params;     
     
     if(!reservationId) {
         console.error('reservationId is empty');
         return;
     }
 
-    sql.on('error', err => { console.log('DB Connection error: ', err); })
+    if(!db) {
+        console.error('db is empty');
+        return;
+    }
+
+    config.database = db === "1" ? process.env.DB_CURRENT_DATABASE : process.env.DB_OLD_DATABASE;
+    
+    sql.on('error', err => { console.log('DB Connection error: ', err); })    
 
     sql.connect(config)
     .then(pool => {              
@@ -64,13 +70,20 @@ app.get('/billing-lines/:reservationId', function (req, res) {
 });
 
 
-app.get('/usage-record/:reservationId', function (req, res) {    
-    const { reservationId } = req.params;   
+app.get('/usage-record/:reservationId/:db', function (req, res) {    
+    const { reservationId, db } = req.params;   
 
     if(!reservationId) {
         console.error('reservationId is empty');
         return;
     }
+
+    if(!db) {
+        console.error('db is empty');
+        return;
+    }
+
+    config.database = db === "1" ? process.env.DB_CURRENT_DATABASE : process.env.DB_OLD_DATABASE;
 
     sql.on('error', err => { console.log('DB Connection error: ', err); })
 
