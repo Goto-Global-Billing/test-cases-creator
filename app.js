@@ -40,7 +40,7 @@ app.get('/billing-lines/:reservationId', function (req, res) {
                             when bl.Source = 1 then 'A2A'
                             when bl.Source = 2 then 'A2B'
                             else 'NONE' end as sourceName,
-                        bl.ChargeType as chargeFactorID,
+                        bl.p_ChargeFactorID as chargeFactorID,
                         cf.[Description] as chargeFactorName,
                         bl.p_RatingCodeID as ratingCodeID,
                         rc.[Description] as ratingCodeName,
@@ -50,7 +50,7 @@ app.get('/billing-lines/:reservationId', function (req, res) {
                         bl.b_BillingLineTextID as billingLineTextID,
                         bt.[Description] as billingLineTextName
                     from dbo.b_BillingLine bl 
-                    inner join p_ChargeFactor cf on bl.ChargeType = cf.ID
+                    inner join p_ChargeFactor cf on bl.p_ChargeFactorID = cf.ID
                     inner join p_RatingCode rc on bl.p_RatingCodeID = rc.ID
                     inner join b_BillingLineText bt on bl.b_BillingLineTextID = bt.ID
                     where bl.OrigCDRExtID = @reservationId and bl.IsActive = 1            
