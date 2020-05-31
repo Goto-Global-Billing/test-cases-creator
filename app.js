@@ -51,22 +51,35 @@ const usageRecordQuery = () => {
 }
 
 const runQuery = (res, query, reservationId) => {
-    sql.on('error', err => { console.log('DB Connection error: ', err); })    
+    sql.on('error', err => { console.log('DB Connection error: ', err); })  
     
-    sql.connect(config)
-    .then(pool => {              
-        return pool.request()
-            .input('reservationId', sql.NVarChar(50), reservationId)
-            .query(query)
-    }).then(result => {              
-        // send records as a response
-        res.send(result.recordset);
-    }).then(() => {        
-        return sql.close();
-    }).catch(err => {              
-        res.send(err);
-        return sql.close();
-    });
+    sql.connect(config, err => {
+        if(!validateError(err, res)) {
+            sql.close();
+            return;
+        }
+
+        const request = new sql.Request();
+        if(reservationId) request.input('reservationId', sql.NVarChar(50), reservationId);        
+        request.query(query, (err, result) => {            
+            // send records as a response
+            if(validateError(err, res)) res.send(result.recordset); 
+
+            sql.close(); 
+        })
+    }); 
+ 
+}
+
+const validateError = (err, res) => {
+    let result = true;
+
+    if(err) {                
+        res.send(err);        
+        result = false;
+    }
+
+    return result;
 }
 
 
