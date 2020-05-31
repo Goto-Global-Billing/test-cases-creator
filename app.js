@@ -50,6 +50,27 @@ const usageRecordQuery = () => {
             `;
 }
 
+const billingLineTextQuery = () => {
+    return `
+        select ID, [Description] from b_BillingLineText
+        order by [Description]
+    `;
+}
+
+const chargeFactorQuery = () => {
+    return `
+        select ID, [Description] from p_ChargeFactor
+        order by ID
+    `;
+}
+
+const ratingCodeQuery = () => {
+    return `
+        select ID, [Description] from p_RatingCode
+        order by ID
+    `;
+}
+
 const runQuery = (res, query, reservationId) => {
     sql.on('error', err => { console.log('DB Connection error: ', err); })  
     
@@ -123,6 +144,22 @@ app.get('/usage-record/:reservationId/:db', function (req, res) {
 
     runQuery(res, usageRecordQuery(), reservationId);  
 });
+
+app.get('/get-billingline-text', function (req, res) { 
+
+    runQuery(res, billingLineTextQuery());  
+});
+
+app.get('/get-charge-factor', function (req, res) { 
+
+    runQuery(res, chargeFactorQuery());  
+});
+
+app.get('/get-rating-code', function (req, res) { 
+
+    runQuery(res, ratingCodeQuery());  
+});
+
 
 //launch server into a port
 app.listen(API_PORT, () =>  console.log('Server is running..'));
