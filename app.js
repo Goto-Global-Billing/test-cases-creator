@@ -8,12 +8,59 @@ app.use(cors());
 
 const API_PORT = 3001;
 //config for your database
-var config = {
+var configCurrentDB = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,    
     server: process.env.DB_SERVER,
     database: process.env.DB_CURRENT_DATABASE
 };
+
+var configOldDB = {
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,    
+    server: process.env.DB_SERVER,
+    database: process.env.DB_OLD_DATABASE
+};
+
+const poolCurrentDB = new sql.ConnectionPool(configCurrentDB);
+const poolCurrentDBConnect = poolCurrentDB.connect();
+
+const poolOldDB = new sql.ConnectionPool(configOldDB);
+const poolOldDBConnect = poolOldDB.connect();
+ 
+poolCurrentDB.on('error', err => {
+    console.error('*****poolCurrentDB error handler', err);
+});
+
+poolOldDB.on('error', err => {
+    console.error('*****poolOldDB error handler', err);
+});
+
+const runPoolCurrentDB  = async (res, query, reservationId) => {
+    await poolCurrentDBConnect;
+    try {
+        const request = poolCurrentDB.request();
+        if(reservationId) request.input('reservationId', sql.NVarChar(50), reservationId);        
+        const result = await request.query(query);        
+        res.send(result.recordset); 
+    } catch (err) {
+        console.error('****runPoolCurrentDB SQL error', err);
+        res.send(err);
+    }
+}
+
+const runPoolOldDB  = async (res, query, reservationId) => {
+    await poolOldDBConnect;
+    try {
+        const request = poolOldDB.request();
+        if(reservationId) request.input('reservationId', sql.NVarChar(50), reservationId);        
+        const result = await request.query(query);        
+        res.send(result.recordset); 
+    } catch (err) {
+        console.error('****runPoolCurrentDB SQL error', err);
+        res.send(err);
+    }
+}
 
 const billingLinesQuery = () => {
     return `
@@ -71,39 +118,6 @@ const ratingCodeQuery = () => {
     `;
 }
 
-const runQuery = (res, query, reservationId) => {
-    sql.on('error', err => { console.log('DB Connection error: ', err); })  
-    
-    sql.connect(config, err => {
-        if(!validateError(err, res)) {
-            sql.close();
-            return;
-        }
-
-        const request = new sql.Request();
-        if(reservationId) request.input('reservationId', sql.NVarChar(50), reservationId);        
-        request.query(query, (err, result) => {            
-            // send records as a response
-            if(validateError(err, res)) res.send(result.recordset); 
-
-            sql.close(); 
-        })
-    }); 
- 
-}
-
-const validateError = (err, res) => {
-    let result = true;
-
-    if(err) {                
-        res.send(err);        
-        result = false;
-    }
-
-    return result;
-}
-
-
 app.get('/', function (req, res) {
     res.send('This is a Magic Billing Application!');
   });
@@ -120,10 +134,11 @@ app.get('/billing-lines/:reservationId/:db', function (req, res) {
         console.error('db is empty');
         return;
     }
-
-    config.database = db === "1" ? process.env.DB_CURRENT_DATABASE : process.env.DB_OLD_DATABASE;
     
-    runQuery(res, billingLinesQuery(), reservationId);  
+    if(db === "1")
+        runPoolCurrentDB(res, billingLinesQuery(), reservationId); 
+    else
+        runPoolOldDB(res, billingLinesQuery(), reservationId);    
 });
 
 
@@ -138,26 +153,27 @@ app.get('/usage-record/:reservationId/:db', function (req, res) {
     if(!db) {
         console.error('db is empty');
         return;
-    }
+    }    
 
-    config.database = db === "1" ? process.env.DB_CURRENT_DATABASE : process.env.DB_OLD_DATABASE;
-
-    runQuery(res, usageRecordQuery(), reservationId);  
+    if(db === "1")
+        runPoolCurrentDB(res, usageRecordQuery(), reservationId); 
+    else
+        runPoolOldDB(res, usageRecordQuery(), reservationId);  
 });
 
 app.get('/get-billingline-text', function (req, res) { 
-
-    runQuery(res, billingLineTextQuery());  
+     
+     runPoolCurrentDB(res, billingLineTextQuery());   
 });
 
-app.get('/get-charge-factor', function (req, res) { 
-
-    runQuery(res, chargeFactorQuery());  
+app.get('/get-charge-factor', function (req, res) {   
+   
+   runPoolCurrentDB(res, chargeFactorQuery()); 
 });
 
-app.get('/get-rating-code', function (req, res) { 
-
-    runQuery(res, ratingCodeQuery());  
+app.get('/get-rating-code', function (req, res) {     
+    
+    runPoolCurrentDB(res, ratingCodeQuery()); 
 });
 
 
