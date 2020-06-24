@@ -8,56 +8,56 @@ app.use(cors());
 
 const API_PORT = 3001;
 //config for your database
-var configCurrentDB = {
+var configTestDB = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,    
-    server: process.env.DB_SERVER,
-    database: process.env.DB_CURRENT_DATABASE
+    server: process.env.DB_TEST_SERVER,
+    database: process.env.DB_TEST_DATABASE
 };
 
-var configOldDB = {
+var configProdDB = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,    
-    server: process.env.DB_SERVER,
-    database: process.env.DB_OLD_DATABASE
+    server: process.env.DB_PROD_SERVER,
+    database: process.env.DB_PROD_DATABASE
 };
 
-const poolCurrentDB = new sql.ConnectionPool(configCurrentDB);
-const poolCurrentDBConnect = poolCurrentDB.connect();
+const poolTestDB = new sql.ConnectionPool(configTestDB);
+const poolTestDBConnect = poolTestDB.connect();
 
-const poolOldDB = new sql.ConnectionPool(configOldDB);
-const poolOldDBConnect = poolOldDB.connect();
+const poolProdDB = new sql.ConnectionPool(configProdDB);
+const poolProdDBConnect = poolProdDB.connect();
  
-poolCurrentDB.on('error', err => {
-    console.error('*****poolCurrentDB error handler', err);
+poolTestDB.on('error', err => {
+    console.error('*****poolTestDB error handler', err);
 });
 
-poolOldDB.on('error', err => {
-    console.error('*****poolOldDB error handler', err);
+poolProdDB.on('error', err => {
+    console.error('*****poolProdDB error handler', err);
 });
 
-const runPoolCurrentDB  = async (res, query, reservationId) => {
-    await poolCurrentDBConnect;
+const runPoolTestDB  = async (res, query, reservationId) => {
+    await poolTestDBConnect;
     try {
-        const request = poolCurrentDB.request();
+        const request = poolTestDB.request();
         if(reservationId) request.input('reservationId', sql.NVarChar(50), reservationId);        
         const result = await request.query(query);        
         res.send(result.recordset); 
     } catch (err) {
-        console.error('****runPoolCurrentDB SQL error', err);
+        console.error('****runPoolTestDB SQL error', err);
         res.send(err);
     }
 }
 
-const runPoolOldDB  = async (res, query, reservationId) => {
-    await poolOldDBConnect;
+const runPoolProdDB  = async (res, query, reservationId) => {
+    await poolProdDBConnect;
     try {
-        const request = poolOldDB.request();
+        const request = poolProdDB.request();
         if(reservationId) request.input('reservationId', sql.NVarChar(50), reservationId);        
         const result = await request.query(query);        
         res.send(result.recordset); 
     } catch (err) {
-        console.error('****runPoolCurrentDB SQL error', err);
+        console.error('****runPoolProdDB SQL error', err);
         res.send(err);
     }
 }
@@ -136,9 +136,9 @@ app.get('/billing-lines/:reservationId/:db', function (req, res) {
     }
     
     if(db === "1")
-        runPoolCurrentDB(res, billingLinesQuery(), reservationId); 
+        runPoolTestDB(res, billingLinesQuery(), reservationId); 
     else
-        runPoolOldDB(res, billingLinesQuery(), reservationId);    
+        runPoolProdDB(res, billingLinesQuery(), reservationId);    
 });
 
 
@@ -156,24 +156,24 @@ app.get('/usage-record/:reservationId/:db', function (req, res) {
     }    
 
     if(db === "1")
-        runPoolCurrentDB(res, usageRecordQuery(), reservationId); 
+        runPoolTestDB(res, usageRecordQuery(), reservationId); 
     else
-        runPoolOldDB(res, usageRecordQuery(), reservationId);  
+        runPoolProdDB(res, usageRecordQuery(), reservationId);  
 });
 
 app.get('/get-billingline-text', function (req, res) { 
      
-     runPoolCurrentDB(res, billingLineTextQuery());   
+     runPoolTestDB(res, billingLineTextQuery());   
 });
 
 app.get('/get-charge-factor', function (req, res) {   
    
-   runPoolCurrentDB(res, chargeFactorQuery()); 
+   runPoolTestDB(res, chargeFactorQuery()); 
 });
 
 app.get('/get-rating-code', function (req, res) {     
     
-    runPoolCurrentDB(res, ratingCodeQuery()); 
+    runPoolTestDB(res, ratingCodeQuery()); 
 });
 
 
